@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "极简火柴人讲解视频：Remotion 本地渲染 + edge-tts 中文旁白",
+  "bin": {
+    "stickman": "./bin/stickman.mjs"
+  },
   "scripts": {
     "studio": "remotion studio",
     "tts": "node scripts/tts.mjs",

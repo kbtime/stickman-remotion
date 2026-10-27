@@ -327,6 +327,42 @@ node scripts/render.mjs --project examples/sample --out out/demo.mp4
 
 产物命名规则：`public/<项目目录名>-narration.mp3` 和 `public/<项目目录名>-captions.json`，多个项目互不覆盖。
 
+## CLI（stickman）
+
+`bin/stickman.mjs` 只是 `scripts/render.mjs` / `scripts/tts.mjs` 外面的一层薄包装：子命令之后的参数**原样转发**，工作目录固定为仓库根，退出码透传。它和 `npm run build:sample-story`、`node scripts/render.mjs ...` 完全等价，只是入口更短。
+
+三种用法：
+
+```bash
+# 1) npx（无需安装/链接）
+npx stickman render --project examples/sample-story
+
+# 2) 仓库内直接跑
+node bin/stickman.mjs render --project examples/sample-story
+
+# 3) 全局命令（先 npm link）
+npm link
+stickman render --project examples/sample-story
+```
+
+子命令：
+
+```bash
+stickman render --project examples/sample-story --aspect 9:16  # 渲染 mp4（必要时先 TTS）
+stickman tts --project examples/sample --audio voice.mp3        # 只生成旁白与字幕
+stickman --help          # 总帮助
+stickman render --help   # 子命令帮助，列出会转发的常用参数
+```
+
+等价的旧写法：
+
+| stickman | 等价命令 |
+|---|---|
+| `stickman render --project examples/sample-story` | `node scripts/render.mjs --project examples/sample-story`（= `npm run build:sample-story`） |
+| `stickman tts --project examples/sample` | `node scripts/tts.mjs --project examples/sample` |
+
+`npm run build:*` 系列脚本保持不变，两种入口都可以用。
+
 ## 目录结构
 
 ```
