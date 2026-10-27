@@ -1,0 +1,276 @@
+{
+  "title": "成效比效率重要",
+  "mode": "story",
+  "theme": "slate",
+  "fps": 30,
+  "width": 1280,
+  "height": 720,
+  "_note": "德鲁克「成效 vs 效率」故事样片（v2 换视觉）。场景只用 busy-desk / customer-gap / split-board / priority-room，冷灰蓝 slate 调色。第 4、5 镜同为 split-board，靠 splitFocus 左/右做并置对比。调性克制：think / busy / point / idle，收束镜站定，不用 celebrate/wave。voice-led：captions 与 shots 1:1 时镜头区间以 public/sample-drucker-captions.json 为准；shots[].duration 仅作参考与质量门自查。",
+  "ttsRate": "-12%",
+  "narration": [
+    "很多人把忙当成成果。",
+    "表格填满了，客户问题还在。",
+    "德鲁克提醒：先问做对的事。",
+    "效率是把事做快。",
+    "成效是把该做的事做成。",
+    "先选对目标，再谈提速。",
+    "忙完不等于做成。"
+  ],
+  "shots": [
+    {
+      "scene": "busy-desk",
+      "framing": "medium",
+      "duration": 3.0,
+      "beat": "中景：整面清单墙压下来，主角在桌前忙个不停",
+      "motion": "上身前倾、双手快速交替小幅上下；表格与清单贴在墙面",
+      "caption": "很多人把忙当成成果。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.38,
+          "y": 0.84,
+          "scale": 1,
+          "pose": "busy",
+          "action": "none",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "spreadsheet",
+          "x": 0.76,
+          "y": 0.6,
+          "scale": 0.9,
+          "appearAt": 0
+        },
+        {
+          "id": "checklist",
+          "x": 0.53,
+          "y": 0.62,
+          "scale": 0.62,
+          "appearAt": 0.3
+        }
+      ]
+    },
+    {
+      "scene": "customer-gap",
+      "framing": "wide",
+      "duration": 3.6,
+      "beat": "全景左右分区：左边表单满格，右边客户还在等，中间缺口没接上",
+      "motion": "左区主角摊手并抬手比向满格表格；右区灰色客户站着耸肩，头顶问号气泡",
+      "caption": "表格填满了，客户问题还在。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.22,
+          "y": 0.84,
+          "scale": 0.98,
+          "pose": "busy",
+          "action": "none",
+          "facing": "right"
+        },
+        {
+          "id": "client",
+          "x": 0.83,
+          "y": 0.86,
+          "scale": 0.9,
+          "pose": "shrug",
+          "action": "none",
+          "facing": "left",
+          "color": "#7C8B99"
+        }
+      ],
+      "props": [
+        {
+          "id": "spreadsheet",
+          "x": 0.28,
+          "y": 0.5,
+          "scale": 0.8,
+          "appearAt": 0,
+          "side": "left"
+        },
+        {
+          "id": "customer",
+          "x": 0.84,
+          "y": 0.56,
+          "scale": 0.72,
+          "appearAt": 0.4,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "scene": "priority-room",
+      "framing": "medium",
+      "duration": 3.6,
+      "beat": "中景：透视目标墙前，主角托下巴思考，前景目标卡写着「做对的事」",
+      "motion": "手托下巴轻微点头；目标卡从卡片槽里浮起",
+      "caption": "德鲁克提醒：先问做对的事。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.34,
+          "y": 0.88,
+          "scale": 1,
+          "pose": "think",
+          "action": "none",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "goal-card",
+          "x": 0.68,
+          "y": 0.72,
+          "scale": 1,
+          "label": "做对的事",
+          "appearAt": 0.4
+        }
+      ]
+    },
+    {
+      "scene": "split-board",
+      "framing": "wide",
+      "splitFocus": "left",
+      "duration": 3.0,
+      "beat": "分屏全景：强制左区「效率」，右区淡出",
+      "motion": "主角站在竖线左侧，右手指向「效率·做快」竖牌",
+      "caption": "效率是把事做快。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.3,
+          "y": 0.86,
+          "scale": 0.96,
+          "pose": "point",
+          "action": "none",
+          "facing": "right",
+          "side": "left"
+        }
+      ],
+      "props": [
+        {
+          "id": "label-speed",
+          "x": 0.16,
+          "y": 0.62,
+          "scale": 1,
+          "appearAt": 0,
+          "side": "left"
+        },
+        {
+          "id": "label-effect",
+          "x": 0.74,
+          "y": 0.62,
+          "scale": 1,
+          "appearAt": 0,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "scene": "split-board",
+      "framing": "wide",
+      "splitFocus": "right",
+      "duration": 3.4,
+      "beat": "分屏全景：同一堵墙，强制右区「成效」，左区淡出——与上一镜并置对比",
+      "motion": "主角站到竖线右侧，左手指向「成效·做成」牌",
+      "caption": "成效是把该做的事做成。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.7,
+          "y": 0.86,
+          "scale": 0.96,
+          "pose": "point",
+          "action": "none",
+          "facing": "left",
+          "side": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "label-speed",
+          "x": 0.16,
+          "y": 0.62,
+          "scale": 1,
+          "appearAt": 0,
+          "side": "left"
+        },
+        {
+          "id": "label-effect",
+          "x": 0.74,
+          "y": 0.62,
+          "scale": 1,
+          "appearAt": 0,
+          "side": "right"
+        }
+      ]
+    },
+    {
+      "scene": "priority-room",
+      "framing": "wide",
+      "duration": 3.4,
+      "beat": "目标墙全景：前景大卡「成效」，后景小卡「琐事」淡出，主角走到卡前",
+      "motion": "从左侧走到卡片槽前，指向前景大卡",
+      "caption": "先选对目标，再谈提速。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.24,
+          "y": 0.92,
+          "scale": 0.88,
+          "pose": "point",
+          "action": "walk-to",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "goal-card",
+          "x": 0.62,
+          "y": 0.9,
+          "scale": 1.25,
+          "label": "成效",
+          "appearAt": 0.2
+        },
+        {
+          "id": "goal-card",
+          "x": 0.88,
+          "y": 0.62,
+          "scale": 0.5,
+          "label": "琐事",
+          "appearAt": 0.8,
+          "dim": true
+        }
+      ]
+    },
+    {
+      "scene": "busy-desk",
+      "framing": "medium",
+      "duration": 3.0,
+      "beat": "收束：回到满格清单墙前，主角站定收手；禁止庆祝动作",
+      "motion": "站定，双臂小幅度自然摆动，清单墙退到背景",
+      "caption": "忙完不等于做成。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.44,
+          "y": 0.84,
+          "scale": 1.02,
+          "pose": "idle",
+          "action": "none",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "checklist",
+          "x": 0.74,
+          "y": 0.6,
+          "scale": 0.6,
+          "appearAt": 0.2
+        }
+      ]
+    }
+  ]
+}

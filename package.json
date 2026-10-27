@@ -1,0 +1,34 @@
+{
+  "name": "stickman-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "极简火柴人讲解视频：Remotion 本地渲染 + edge-tts 中文旁白",
+  "scripts": {
+    "studio": "remotion studio",
+    "tts": "node scripts/tts.mjs",
+    "render": "node scripts/render.mjs",
+    "build:sample": "node scripts/render.mjs --project examples/sample",
+    "build:sample-short": "node scripts/render.mjs --project examples/sample-short",
+    "build:sample-story": "node scripts/render.mjs --project examples/sample-story",
+    "build:sample-story-portrait": "node scripts/render.mjs --project examples/sample-story-portrait",
+    "build:sample-story-916": "node scripts/render.mjs --project examples/sample-story --aspect 9:16 --out out/sample-story-9x16.mp4",
+    "build:sample-drucker": "node scripts/render.mjs --project examples/sample-drucker"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.320",
+    "@remotion/media-utils": "4.0.320",
+    "@remotion/renderer": "4.0.320",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.320"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.6.3"
+  },
+  "allowScripts": {
+    "esbuild@0.25.0": true
+  }
+}

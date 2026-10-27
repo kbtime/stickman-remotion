@@ -1,0 +1,66 @@
+{
+  "title": "为什么本地渲染火柴人视频（短样）",
+  "fps": 30,
+  "width": 1280,
+  "height": 720,
+  "_note": "voice-led：镜头区间以 public/sample-short-captions.json（TTS 实际时间轴）为准；shots[].duration 仅作参考与质量门自查，不参与排程（captions 与 shots 数量 1:1 时）。",
+  "ttsRate": "-8%",
+  "narration": [
+    "别把火柴人视频丢给云端。",
+    "本地按下回车，立刻开渲。",
+    "改一句旁白，几十秒重出。",
+    "成本只花电费，额度不怕清零。",
+    "同一份脚本，明年还能复现。",
+    "先出成片，再谈打磨。"
+  ],
+  "shots": [
+    {
+      "heading": "不排队",
+      "bullets": ["本地开跑"],
+      "pose": "walk",
+      "duration": 3.5,
+      "beat": "开场否定云端，走到镜头前",
+      "motion": "左右腿交替迈步，身体来回走 50px"
+    },
+    {
+      "heading": "按回车就渲",
+      "bullets": ["零云端依赖", "不用等审核"],
+      "pose": "point",
+      "duration": 3.6,
+      "beat": "指向本机，强调立刻开跑",
+      "motion": "右手水平指向，指尖上下弹跳 14°"
+    },
+    {
+      "heading": "改一句就重出",
+      "bullets": ["几十秒出新版"],
+      "pose": "think",
+      "duration": 3.6,
+      "beat": "想一下要改哪句",
+      "motion": "手托下巴，轻微点头"
+    },
+    {
+      "heading": "只花电费",
+      "bullets": ["不按秒计费", "额度不归零"],
+      "pose": "shrug",
+      "duration": 3.8,
+      "beat": "摊手：成本就这么点",
+      "motion": "双肩上抬，双手外翻"
+    },
+    {
+      "heading": "明年也能复现",
+      "bullets": ["脚本 + 音轨", "帧帧一致"],
+      "pose": "wave",
+      "duration": 3.6,
+      "beat": "挥手打招呼：同一份脚本还在",
+      "motion": "右手高举大幅挥动 34°"
+    },
+    {
+      "heading": "先出成片",
+      "bullets": ["看见画面再打磨"],
+      "pose": "celebrate",
+      "duration": 3.4,
+      "beat": "收尾庆祝，出片",
+      "motion": "双手上举 + 跳跃 18px"
+    }
+  ]
+}

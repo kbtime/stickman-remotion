@@ -1,0 +1,231 @@
+{
+  "title": "云端排队 vs 本地出片（竖屏版）",
+  "mode": "story",
+  "fps": 30,
+  "aspect": "9:16",
+  "width": 720,
+  "height": 1280,
+  "_note": "竖屏 9:16 版：分镜复用 examples/sample-story（同一份 shots/narration），只改画幅。0–1 坐标相对实际画布（720×1280），已把站位收到中间：竖屏宽画幅窄，x 建议落在 0.3–0.7，双人镜拆成前后/左右更紧凑的站位。captions 仍读 public/sample-story-portrait-captions.json，首次渲染会自动跑 TTS 生成（旁白文案与 sample-story 相同）。",
+  "ttsRate": "-18%",
+  "narration": [
+    "我想快出一条火柴人短片。",
+    "先丢给云端生成。",
+    "结果卡在排队墙。",
+    "等了又等，还是没动静。",
+    "改成本地渲染试试。",
+    "按下回车，立刻开跑。",
+    "成片出来了，能复现。"
+  ],
+  "shots": [
+    {
+      "scene": "office",
+      "framing": "wide",
+      "duration": 3.43,
+      "beat": "主角走进办公室，抛出需求",
+      "motion": "从画面左侧快步走入，停到左三分之一处",
+      "caption": "我想快出一条火柴人短片。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.42,
+          "y": 0.8,
+          "scale": 1,
+          "pose": "walk",
+          "action": "enter-left",
+          "facing": "right"
+        }
+      ],
+      "props": []
+    },
+    {
+      "scene": "office",
+      "framing": "medium",
+      "duration": 3.54,
+      "beat": "指着显示器，把任务交给云端",
+      "motion": "右手水平指向显示器，指尖上下弹跳",
+      "caption": "先丢给云端生成。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.4,
+          "y": 0.8,
+          "scale": 1,
+          "pose": "point",
+          "action": "none",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "monitor",
+          "x": 0.66,
+          "y": 0.76,
+          "scale": 1
+        },
+        {
+          "id": "cloud",
+          "x": 0.56,
+          "y": 0.22,
+          "scale": 0.85,
+          "appearAt": 0.6
+        }
+      ]
+    },
+    {
+      "scene": "queue",
+      "framing": "wide",
+      "duration": 3.76,
+      "beat": "场景切到排队墙，主角摊手，进度条卡住",
+      "motion": "双肩上抬、双手外翻，进度条缓慢爬行",
+      "caption": "结果卡在排队墙。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.36,
+          "y": 0.8,
+          "scale": 1,
+          "pose": "shrug",
+          "action": "enter-left",
+          "facing": "right"
+        },
+        {
+          "id": "npc",
+          "x": 0.64,
+          "y": 0.84,
+          "scale": 0.94,
+          "pose": "idle",
+          "action": "none",
+          "facing": "left",
+          "color": "#8A857D"
+        }
+      ],
+      "props": [
+        {
+          "id": "progress",
+          "x": 0.5,
+          "y": 0.18,
+          "scale": 0.8,
+          "appearAt": 0
+        }
+      ]
+    },
+    {
+      "scene": "queue",
+      "framing": "close",
+      "duration": 3.32,
+      "beat": "近景：主角手托下巴干等",
+      "motion": "手托下巴，轻微点头",
+      "caption": "等了又等，还是没动静。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.46,
+          "y": 0.82,
+          "scale": 1.05,
+          "pose": "think",
+          "action": "none",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "progress",
+          "x": 0.44,
+          "y": 0.14,
+          "scale": 0.5,
+          "appearAt": 0.4
+        }
+      ]
+    },
+    {
+      "scene": "desk",
+      "framing": "medium",
+      "duration": 3.54,
+      "beat": "换场到本机工作台，主角走到桌前",
+      "motion": "从左侧走到桌前站定，笔记本出现",
+      "caption": "改成本地渲染试试。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.42,
+          "y": 0.82,
+          "scale": 1,
+          "pose": "walk",
+          "action": "walk-to",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "laptop",
+          "x": 0.62,
+          "y": 0.8,
+          "scale": 0.8,
+          "appearAt": 0
+        }
+      ]
+    },
+    {
+      "scene": "desk",
+      "framing": "medium",
+      "duration": 3.54,
+      "beat": "指向键盘，按下回车开跑",
+      "motion": "右手指向笔记本，指尖弹跳；屏幕进度条亮起",
+      "caption": "按下回车，立刻开跑。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.42,
+          "y": 0.82,
+          "scale": 1,
+          "pose": "point",
+          "action": "none",
+          "facing": "right"
+        }
+      ],
+      "props": [
+        {
+          "id": "laptop",
+          "x": 0.62,
+          "y": 0.8,
+          "scale": 0.8
+        },
+        {
+          "id": "progress",
+          "x": 0.62,
+          "y": 0.42,
+          "scale": 0.36,
+          "appearAt": 0.5
+        }
+      ]
+    },
+    {
+      "scene": "stage",
+      "framing": "wide",
+      "duration": 3.76,
+      "beat": "舞台聚光，双手上举庆祝出片",
+      "motion": "双手上举 + 跳跃，场记板亮出",
+      "caption": "成片出来了，能复现。",
+      "cast": [
+        {
+          "id": "hero",
+          "x": 0.5,
+          "y": 0.84,
+          "scale": 1.1,
+          "pose": "celebrate",
+          "action": "enter-right",
+          "facing": "left"
+        }
+      ],
+      "props": [
+        {
+          "id": "clapper",
+          "x": 0.72,
+          "y": 0.86,
+          "scale": 0.8,
+          "appearAt": 0.8
+        }
+      ]
+    }
+  ]
+}

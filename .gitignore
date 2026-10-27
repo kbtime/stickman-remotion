@@ -1,0 +1,6 @@
+node_modules/
+out/
+public/*-narration.mp3
+public/*-captions.json
+.DS_Store
+*.log
