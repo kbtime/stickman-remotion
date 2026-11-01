@@ -1,0 +1,120 @@
+{
+  "title": "AI 写周报为什么像套话（规范 v2 示范改写）",
+  "_note": "来自 stickman-koubo-style-guide-v2.md 第四节 9 镜示范；镜 6 写成 17 个有效字的信息句，用于 C02/C21 额度回归。第 3 镜保留【待补】占位。",
+  "mode": "story",
+  "aspect": "9:16",
+  "theme": "warm",
+  "fps": 30,
+  "ttsRate": "-12%",
+  "narration": [
+    "AI 写的周报，一看就是 AI 写的。",
+    "我之前交出去的也这样。",
+    "【待补：自己哪次被看出来的场面】",
+    "它其实不知道我这周干了啥。",
+    "所以我先自己列三条做过的事。",
+    "做了哪些事，卡在哪一步，下周准备干点啥。",
+    "再整段粘给它，只让它顺句子。",
+    "稿子里每条都是我这周干过的。",
+    "现在打开备忘录，先记一条今天的。"
+  ],
+  "shots": [
+    {
+      "beat": "hook",
+      "point": "AI 写的东西一眼能看出来",
+      "scene": "desk",
+      "framing": "medium",
+      "caption": "一看就是 AI 写的",
+      "cast": [
+        { "id": "hero", "x": 0.42, "y": 0.8, "scale": 1, "pose": "shrug", "action": "enter-left", "facing": "right" }
+      ],
+      "props": [{ "id": "laptop", "x": 0.7, "y": 0.82, "scale": 0.95 }]
+    },
+    {
+      "beat": "hook",
+      "point": "我也交过这样的",
+      "scene": "office",
+      "framing": "medium",
+      "caption": "我之前也这样",
+      "cast": [
+        { "id": "hero", "x": 0.4, "y": 0.8, "scale": 1, "pose": "idle", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "monitor", "x": 0.72, "y": 0.74, "scale": 1 }]
+    },
+    {
+      "beat": "problem",
+      "point": "真实场景",
+      "scene": "meeting",
+      "framing": "close",
+      "cast": [
+        { "id": "hero", "x": 0.46, "y": 0.82, "scale": 1.05, "pose": "think", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "board", "x": 0.74, "y": 0.4, "scale": 1 }]
+    },
+    {
+      "beat": "problem",
+      "point": "缺的是这周的事实",
+      "scene": "office",
+      "framing": "close",
+      "caption": "它不知道你干了啥",
+      "cast": [
+        { "id": "hero", "x": 0.44, "y": 0.82, "scale": 1.05, "pose": "point", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "monitor", "x": 0.74, "y": 0.74, "scale": 1 }]
+    },
+    {
+      "beat": "breakdown",
+      "point": "第一步：自己列三条",
+      "scene": "busy-desk",
+      "framing": "wide",
+      "caption": "先列三条",
+      "cast": [
+        { "id": "hero", "x": 0.36, "y": 0.82, "scale": 1, "pose": "busy", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "checklist", "x": 0.72, "y": 0.5, "scale": 1 }]
+    },
+    {
+      "beat": "breakdown",
+      "point": "三条分别写什么",
+      "scene": "busy-desk",
+      "framing": "wide",
+      "caption": "做了啥 / 卡哪 / 下周",
+      "cast": [
+        { "id": "hero", "x": 0.36, "y": 0.82, "scale": 1, "pose": "point", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "checklist", "x": 0.72, "y": 0.5, "scale": 1 }]
+    },
+    {
+      "beat": "breakdown",
+      "point": "第二步：只让 AI 顺句子",
+      "scene": "desk",
+      "framing": "medium",
+      "caption": "只让它顺一遍",
+      "cast": [
+        { "id": "hero", "x": 0.38, "y": 0.82, "scale": 1, "pose": "point", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "laptop", "x": 0.7, "y": 0.82, "scale": 0.95 }]
+    },
+    {
+      "beat": "takeaway",
+      "point": "结论：只写自己干过的",
+      "scene": "desk",
+      "framing": "close",
+      "caption": "都是我干过的",
+      "cast": [
+        { "id": "hero", "x": 0.42, "y": 0.82, "scale": 1.05, "pose": "point", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "laptop", "x": 0.72, "y": 0.82, "scale": 0.95 }]
+    },
+    {
+      "beat": "action",
+      "point": "马上记下今天一件事",
+      "scene": "desk",
+      "framing": "close",
+      "caption": "打开备忘录",
+      "cast": [
+        { "id": "hero", "x": 0.42, "y": 0.82, "scale": 1.05, "pose": "point", "action": "none", "facing": "right" }
+      ],
+      "props": [{ "id": "laptop", "x": 0.72, "y": 0.82, "scale": 0.95 }]
+    }
+  ]
+}

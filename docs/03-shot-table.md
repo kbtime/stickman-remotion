@@ -7,7 +7,7 @@
 | `heading` | 镜内大字标题，短（≤6 字为宜） | `按回车就渲` |
 | `bullets` | 1–2 条要点，按 4–6 帧 stagger 入场 | `["零云端依赖", "不用等审核"]` |
 | `pose` | 火柴人姿态：`idle` / `walk` / `point` / `think` / `wave` / `shrug` / `celebrate` | `point` |
-| `beat` | 这一镜的叙事节拍（仅文档，渲染忽略） | `指向本机，强调立刻开跑` |
+| `beat` | 叙事节拍。内容规则只认 `hook` / `problem` / `breakdown` / `takeaway` / `action`；其它文本仍可写给渲染文档看，但不会被当成段落。详见 docs/05。 | `hook` |
 | `motion` | 镜内可感知动作（仅文档，渲染忽略；实际动作由 pose 决定） | `右手水平指向，指尖上下弹跳 14°` |
 | `duration` | 镜头秒数，2–4 秒；全镜显式写出时按手写时长排轴 | `3.6` |
 

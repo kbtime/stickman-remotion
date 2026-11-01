@@ -193,6 +193,40 @@ stickman qc --video out/sample-short.mp4 --captions public/sample-short-captions
 
 预览视频忘记加 `--preview` 时，如果脚本发现视频明显短于字幕末尾，会自动只检查视频时长内的字幕，并给一条时长 WARN 提醒。
 
+### 内容层：research / point / 五段节奏 / 内容规则
+
+画面检查之外还有一层内容检查，完整说明见 **[docs/05-content-qc.md](docs/05-content-qc.md)**（含 v2 九类 AI 腔摘要、C01–C26 对照表、规则格式与裁决说明）：
+
+```bash
+# 事实核查：抽取数字/事实说法，联网搜索并判定
+stickman research --project examples/sample-story
+
+# 脚本文案 lint：结构 + 五段节奏 + 非 LLM 内容规则
+stickman lint --project examples/sample-story
+stickman lint --project examples/sample-story --stage render
+
+# 成片 QC 同时跑全部内容规则（builtin/regex + LLM，需要 DEEPSEEK_API_KEY）
+stickman qc --video out/sample-story.mp4 --captions public/sample-story-captions.json \
+  --script examples/sample-story/script.json --rules qc-rules.json
+
+# 渲染前内容门（可选，默认关闭）
+stickman render --project examples/sample-story --content-gate
+```
+
+- 每个 `shots[]` 都要有 `point`（这一镜要观众记住什么）；
+- `shots[].beat` 用规范五段 `hook → problem → breakdown → takeaway → action`；兼容旧字段 `beatRole`（`conclusion` 映射为 `takeaway`）。节奏按规范表的建议字数/镜头数/时长区间提示，长版 1–3 分钟约 25–60 镜，短版各段 1–2 镜；
+- 规则文件是 `qc-rules.json`（version 2），默认包含 C01–C26 与 4 条 LLM 规则（`hook_3s` / `jargon` / `actionable_ending` / `point_alignment`，对应规范 L01–L04）；`type` 支持 `builtin` / `regex` / `llm`，阈值和词表都在 `params`，`stage=render` 的规则只在 `--stage render` 生效；
+- v2 句长是折中口径：≤16 普通句，17–22 信息句占额度（钩子+问题合计 ≤1，拆解每 8 镜 ≤1，结论+行动合计 ≤1），≥23 FAIL；连续 ≥4 句 ≤8 字判分行体（C20），17–22 字超额度由 C21 报；
+- C08 合入 C08a 万能开头词表，同时查前 3 秒 captions 与 `narration[0..2]`；C12 合入 C12a，口号空问 FAIL、含具体对象的问题 WARN、无问句 PASS；C14 只提示连续=2 的同开头，连续 ≥3 句交给 C23；
+- C10 只管「不是…而是…」类假对比（明确纠正对象降 WARN）；C22–C26 分别提示过早总结、机械排比、抽象大词、替人物抒情、长短不交替；C19 扩到极致/完美/零缺陷；
+- C17 默认 `draftStatus: "PASS"`：草稿阶段允许【待补】、不拦，`--stage render` 才 FAIL；
+- 项目目录同名规则文件优先，`--rules` 可覆盖；`enabled:false` 标 `DISABLED`，缺 key / LLM 失败标 `SKIP` 并写原因；
+- `qc-report.json` 的 `content` 是数组，`qc-report.md` 有「内容检查」表（ID / 规则 / 级别 / 状态 / 说明）；内容 FAIL 在汇总标「内容 FAIL（渲染前需改）」，但只计入 WARN，不改变视觉退出码；
+- `lint` 有 FAIL 退出 1，只有 WARN/INFO 退出 0；`render --content-gate` 会在渲染前跑 `lint --stage render`，有 FAIL 就中止；
+- `research` 报告里的 `source_url` 不带 `#1` 这类序号锚点，`generatedAt` 是带本地时区偏移的 ISO 时间。
+
+> `examples/sample*` 是 v1 规范落地前的旧样片（`beat` 仍是自由文本，文案含旧腔调）。`npm run lint:examples` 会在部分旧样片上报 C 规则 FAIL，这是存量差异、可以接受；不要为了旧样片过检改 16:9/9:16 渲染默认路径。新稿请从 `test/fixtures/style-guide-demo.json`（v2 九镜示范）和 docs/05 的五段模板起步。
+
 ## 画幅：16:9 横屏 / 9:16 竖屏
 
 同一份分镜可以出两种画幅，**坐标全是相对实际画布的 0–1 比例**，换画幅不用改分镜。
@@ -460,11 +494,19 @@ stickman render --project examples/sample-story
 ```bash
 stickman render --project examples/sample-story --aspect 9:16  # 渲染 mp4（必要时先 TTS）
 stickman render --project examples/sample-story --preview 30s   # 只渲前 30 秒
+stickman render --project examples/sample-story --content-gate  # 渲染前跑内容门
 stickman tts --project examples/sample --audio voice.mp3        # 只生成旁白与字幕
 stickman qc --video out/sample.mp4 --captions public/sample-captions.json  # 成片 QC
+stickman qc --video out/sample.mp4 --captions public/sample-captions.json \
+  --script examples/sample/script.json --rules qc-rules.json     # 成片 QC + 内容规则
+stickman research --project examples/sample-story               # 事实核查
+stickman lint --project examples/sample-story                    # 脚本文案 lint（结构/节奏/规则）
+stickman lint --project examples/sample-story --stage render      # 渲染前规则（C17 等）
 stickman --help          # 总帮助
 stickman render --help   # 子命令帮助，列出会转发的常用参数
-stickman qc --help       # QC 参数说明
+stickman qc --help       # QC 参数说明（含 --script / --rules / --stage / --no-content）
+stickman research --help # 事实核查参数说明
+stickman lint --help     # lint 参数说明
 ```
 
 等价的旧写法：
@@ -475,6 +517,8 @@ stickman qc --help       # QC 参数说明
 | `stickman render --project examples/sample-story --preview 30s` | `node scripts/render.mjs --project examples/sample-story --preview 30s` |
 | `stickman tts --project examples/sample` | `node scripts/tts.mjs --project examples/sample` |
 | `stickman qc --video out/sample.mp4 --captions public/sample-captions.json` | `node scripts/qc.mjs --video out/sample.mp4 --captions public/sample-captions.json` |
+| `stickman research --project examples/sample-story` | `node scripts/research.mjs --project examples/sample-story` |
+| `stickman lint --project examples/sample` | `node scripts/lint.mjs --project examples/sample` |
 
 `npm run build:*` 系列脚本保持不变，两种入口都可以用。
 
@@ -485,6 +529,9 @@ stickman-remotion/
 ├── docs/01-dissection.md        # 原始需求拆解（只读）
 ├── docs/02-storyboard-benchmarks.md  # 分镜对标与硬规则
 ├── docs/03-shot-table.md        # 分镜表格式（heading/beat/pose/motion/duration）
+├── docs/04-story-pipeline.md    # 故事片管线目标与实现摘要
+├── docs/05-content-qc.md        # 内容层：research / point / 节奏 / QC 规则
+├── qc-rules.json                # 内容 QC 默认规则（项目目录同名文件优先）
 ├── examples/sample/script.json  # 旧样例脚本（约 47s，保留作对照）
 ├── examples/sample-short/script.json  # 短卡片样片脚本（约 21.5s）
 ├── examples/sample-story/script.json  # 故事样片脚本（7 镜，约 22.5s）
@@ -493,11 +540,15 @@ stickman-remotion/
 ├── public/                      # TTS 产物（运行时生成，已在 .gitignore）
 ├── out/                         # 渲染输出
 ├── qc/                          # QC 报告（运行时生成）
-├── reference/lessons.md         # 踩坑记录（edge-tts / 帧量化 / 预览 / QC 阈值）
+├── reference/lessons.md         # 踩坑记录（edge-tts / 帧量化 / 预览 / QC / 内容层）
 ├── scripts/
 │   ├── edge_tts_boundary.py     # edge-tts WordBoundary 合成 + 逐词边界
 │   ├── tts.mjs                  # 逐词对齐 + 帧量化字幕（失败回退比例分配）
-│   ├── render.mjs               # 一键 TTS + render（支持 --preview）
+│   ├── render.mjs               # 一键 TTS + render（支持 --preview / --content-gate）
+│   ├── research.mjs             # 事实核查：抽 claim + 联网搜索 + 判定
+│   ├── lint.mjs                 # 脚本 lint：结构 / 五段节奏 / 非 LLM 规则
+│   ├── content-rules.mjs        # 规则引擎：loadRules / runRules / C01–C26 检查器
+│   ├── content-qc.mjs           # 内容 QC：builtin/regex + LLM 批量检查
 │   └── qc.mjs                   # 抽帧 QC + captions 时间轴检查
 └── src/
     ├── index.ts                 # registerRoot

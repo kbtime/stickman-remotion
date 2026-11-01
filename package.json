@@ -16,7 +16,12 @@
     "build:sample-story": "node scripts/render.mjs --project examples/sample-story",
     "build:sample-story-portrait": "node scripts/render.mjs --project examples/sample-story-portrait",
     "build:sample-story-916": "node scripts/render.mjs --project examples/sample-story --aspect 9:16 --out out/sample-story-9x16.mp4",
-    "build:sample-drucker": "node scripts/render.mjs --project examples/sample-drucker"
+    "build:sample-drucker": "node scripts/render.mjs --project examples/sample-drucker",
+    "test": "node --test test/",
+    "lint:sample": "node scripts/lint.mjs --project examples/sample",
+    "lint:examples": "for d in examples/*/; do node scripts/lint.mjs --project \"$d\" || exit 1; done",
+    "research:sample": "node scripts/research.mjs --project examples/sample --no-llm",
+    "research:sample-llm": "node scripts/research.mjs --project examples/sample"
   },
   "dependencies": {
     "@remotion/cli": "4.0.320",

@@ -1,0 +1,397 @@
+{
+  "version": 2,
+  "rules": [
+    {
+      "id": "C01",
+      "name": "首句够短",
+      "description": "首句只算中文字/英文字母/数字，不超过 14 字",
+      "type": "builtin",
+      "check": "first_sentence_length",
+      "params": { "max": 14 },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C02",
+      "name": "单句长度（折中）",
+      "description": "≤16 为普通句；17–22 为信息句并占用额度（钩子+问题合计≤1，拆解每 8 镜≤1，结论+行动合计≤1）；≥23 直接 FAIL。报告 detail 列出占用额度的信息句",
+      "type": "builtin",
+      "check": "sentence_length",
+      "params": {
+        "normalMax": 16,
+        "infoMax": 22,
+        "hookProblemMax": 1,
+        "breakdownPerShots": 8,
+        "breakdownMaxPer": 1,
+        "takeawayActionMax": 1
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C03",
+      "name": "镜句对齐",
+      "description": "narration 条数必须等于 shots 数量",
+      "type": "builtin",
+      "check": "shot_alignment",
+      "params": {},
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C04",
+      "name": "总字数",
+      "description": "全文 300–800 字；短版（length=short 或镜头数 ≤ 12）60–120 字",
+      "type": "builtin",
+      "check": "total_chars",
+      "params": {
+        "min": 300,
+        "max": 800,
+        "shortMin": 60,
+        "shortMax": 120,
+        "shortShotMax": 12
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C05",
+      "name": "point 必填",
+      "description": "每个 shots[i].point 非空，且长度 1–20 字",
+      "type": "builtin",
+      "check": "point_present",
+      "params": { "min": 1, "max": 20 },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C06",
+      "name": "point 不复读",
+      "description": "point 与对应旁白完全相同的占比不超过 30%",
+      "type": "builtin",
+      "check": "point_repeat",
+      "params": { "maxRatio": 0.3 },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C07",
+      "name": "五段齐全",
+      "description": "beat（或 beatRole）至少各出现一次，顺序为 hook→problem→breakdown→takeaway→action，允许同段相邻重复",
+      "type": "builtin",
+      "check": "beats_complete",
+      "params": {},
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C08",
+      "name": "钩子在 3 秒内（并入 C08a 万能开头）",
+      "description": "第一镜 beat=hook；前 3 秒 captions（start/end 秒或 startFrame/endFrame+fps）与 narration[0..2] 都不命中 params.openerPattern（即 C08a 万能开头词表）。没有 captions 时退化为 narration 并在 detail 注明",
+      "type": "builtin",
+      "check": "hook_within_3s",
+      "params": {
+        "seconds": 3,
+        "narrationLines": 3,
+        "openerPattern": "^(随着|在.{0,12}(背景下|今天|时代)|今天(跟|和)大家|大家好|有这样一(群人|个地方)|他是一名)"
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C09",
+      "name": "禁用词（宣传/材料/夸张）",
+      "description": "v2 词表：宣传词、材料腔、口号、夸大和伪精致词全文 0 次",
+      "type": "regex",
+      "params": {
+        "pattern": "扛把子|劳模|暴雷|血泪|最顶级|天花板|赋能|颠覆|重构|重磅|炸裂|王炸|解锁.{0,4}生产力|闭环|抓手|生态(?!系统)|提质增效|高质量发展|未来可期|书写.{0,6}篇章|砥砺前行|匠心",
+        "max": 0
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C10",
+      "name": "假对比句式",
+      "description": "聚焦「不是…而是…」「不只是…更是…」「并非…而是…」。整句含明确纠正对象对立名词（params.correctionNouns）→ WARN，否则 FAIL；评论区/学会了吗归 C12",
+      "type": "builtin",
+      "check": "contrast_pattern",
+      "params": {
+        "patterns": [
+          "不是.{1,12}而是",
+          "不只是.{1,12}更是",
+          "并非.{1,12}而是"
+        ],
+        "correctionNouns": [
+          ["保存", "上传"],
+          ["前端", "后端"],
+          ["客户端", "服务端"],
+          ["输入", "输出"],
+          ["读取", "写入"]
+        ]
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C11",
+      "name": "结尾动作",
+      "description": "最后 1–2 句去掉「现在/今天/先/就」后以动作动词开头；短版允许结论事实句 + 行动动词镜",
+      "type": "builtin",
+      "check": "ending_action",
+      "params": {
+        "lastN": 2,
+        "leadingWords": ["现在", "今天", "先", "就"],
+        "verbs": ["打开", "写", "记", "列", "删", "改", "试", "粘", "发", "关", "建", "存", "录", "找", "问", "补"]
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C12",
+      "name": "结尾问句判定（并入 C12a 口号词表）",
+      "description": "口号式空问 FAIL；具体留白问题（问句且含 params.concreteNouns）WARN；无问句且 C11 过 PASS；最后 2 句命中 C12a 口号词表 FAIL",
+      "type": "builtin",
+      "check": "ending_question",
+      "params": {
+        "emptyQuestionPattern": "你学会了吗|对不对|是不是|好不好|你觉得呢|欢迎在评论区|有哪些困惑",
+        "concreteNouns": [
+          "周报",
+          "日报",
+          "月报",
+          "会议纪要",
+          "备忘录",
+          "提示词",
+          "表格",
+          "文档",
+          "邮件",
+          "脚本",
+          "清单",
+          "计划",
+          "手机",
+          "电脑",
+          "镜头",
+          "字幕",
+          "视频",
+          "简历"
+        ],
+        "sloganPattern": "未来可期|让我们|携手|致敬|新的篇章|拥抱\\s*AI|解锁|一起加油",
+        "sloganLastN": 2
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C13",
+      "name": "术语解释",
+      "description": "术语首次出现的句子或下一句要有白话解释标记；术语表可在 params.terms 扩展",
+      "type": "builtin",
+      "check": "jargon_explained",
+      "params": {
+        "terms": ["Agent", "提示词", "大模型", "API", "多模态", "Token", "RAG", "微调"],
+        "markers": ["就是", "相当于", "说白了", "也就是", "指的是", "，即"]
+      },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C14",
+      "name": "同句式开头（仅提示连续 2 句）",
+      "description": "连续句子前 2 字相同：C14 只报连续=2 的情况；连续 ≥3 句交给 C23 机械排比",
+      "type": "builtin",
+      "check": "consecutive_same_prefix",
+      "params": { "maxRun": 2, "prefixChars": 2 },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C15",
+      "name": "第一人称",
+      "description": "全文出现「我」至少 2 次",
+      "type": "builtin",
+      "check": "first_person",
+      "params": { "token": "我", "min": 2 },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C16",
+      "name": "等长排比",
+      "description": "连续 3 句字数相同且前 2 字相同，或连续 3 个四字词以顿号/逗号分隔",
+      "type": "builtin",
+      "check": "parallelism",
+      "params": {},
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C17",
+      "name": "待补占位",
+      "description": "草稿允许【待补；进入渲染前必须为 0",
+      "type": "regex",
+      "params": { "pattern": "【待补", "max": 0 },
+      "level": "FAIL",
+      "stage": "render",
+      "draftStatus": "PASS",
+      "enabled": true
+    },
+    {
+      "id": "C18",
+      "name": "数字有出处",
+      "description": "含阿拉伯数字或「百分之/倍」的句子，在 research.md 中能找到同一数字",
+      "type": "builtin",
+      "check": "numbers_sourced",
+      "params": {},
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C19",
+      "name": "夸张词",
+      "description": "最/第一/彻底/所有/永远/100%/极致/完美/零缺陷 出现不超过 2 次",
+      "type": "regex",
+      "params": {
+        "pattern": "最|第一|彻底|所有|永远|100%|极致|完美|零缺陷",
+        "max": 2
+      },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C20",
+      "name": "分行体",
+      "description": "连续 ≥4 句，每句都不超过 8 字：必须合并或改写",
+      "type": "builtin",
+      "check": "line_break_style",
+      "params": { "minRun": 4, "maxLength": 8 },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C21",
+      "name": "信息句额度",
+      "description": "17–22 字信息句按段落占用额度；超额度 FAIL（与 C02 共用额度表）",
+      "type": "builtin",
+      "check": "info_sentence_quota",
+      "params": {
+        "normalMax": 16,
+        "infoMax": 22,
+        "hookProblemMax": 1,
+        "breakdownPerShots": 8,
+        "breakdownMaxPer": 1,
+        "takeawayActionMax": 1
+      },
+      "level": "FAIL",
+      "enabled": true
+    },
+    {
+      "id": "C22",
+      "name": "过早总结",
+      "description": "全文前 30% 字符内出现总之/总的来说/一句话/归根结底/这就是…本质：WARN",
+      "type": "builtin",
+      "check": "early_summary",
+      "params": {
+        "ratio": 0.3,
+        "patterns": [
+          "总之",
+          "总的来说",
+          "一句话",
+          "归根结底",
+          "这就是.{0,8}(精神|关键|本质)"
+        ]
+      },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C23",
+      "name": "机械排比 / 同构开头",
+      "description": "连续 ≥3 句前 2 字相同；或连续 3 个四字词；或「从…到…，从…到…」：WARN",
+      "type": "builtin",
+      "check": "mechanical_parallelism",
+      "params": {
+        "prefixChars": 2,
+        "minPrefixRun": 3,
+        "fourCharRun": 3,
+        "fromToPattern": "从.{1,8}到.{1,8}[，,].{0,4}从.{1,8}到"
+      },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C24",
+      "name": "抽象大词（材料腔扩展）",
+      "description": "本质是/底层逻辑/认知重构/真正赋能/核心竞争力/价值闭环：WARN；与 C09 重叠的词以 C09 FAIL 为准",
+      "type": "regex",
+      "params": {
+        "pattern": "本质是|底层逻辑|认知重构|真正赋能|核心竞争力|价值闭环",
+        "max": 0
+      },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C25",
+      "name": "替人物抒情套话",
+      "description": "深知/充满了…自豪或感动/那一刻…明白了/心中涌起：WARN",
+      "type": "regex",
+      "params": {
+        "pattern": "深知|充满了.{0,4}(自豪|感动)|那一刻.{0,6}明白了|心中涌起",
+        "max": 0
+      },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "C26",
+      "name": "长短交替提示",
+      "description": "连续 ≥5 句长度都在 12–16 且相邻句长度差均 ≤2：WARN，建议拆入短句落点",
+      "type": "builtin",
+      "check": "length_alternation",
+      "params": {
+        "minRun": 5,
+        "minLength": 12,
+        "maxLength": 16,
+        "maxDiff": 2
+      },
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "hook_3s",
+      "name": "开头 3 秒钩子（LLM / L01）",
+      "description": "开头 3 秒能不能留住人",
+      "type": "llm",
+      "prompt": "看 opening_3s（开头 3 秒字幕）和旁白开头：有没有具体冲突、反常识结论、明确收益或问题，让人愿意继续看下去。只讲背景、客套或自我介绍不算钩子。",
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "jargon",
+      "name": "术语解释（LLM / L02）",
+      "description": "旁白里未解释的术语、缩写、行话",
+      "type": "llm",
+      "prompt": "检查旁白里有没有未解释的术语、缩写、行话。逐条列在 items，并尽量给出更通俗的说法；观众需要行业知识才能听懂就算不通过。",
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "actionable_ending",
+      "name": "结尾可行动（LLM / L03）",
+      "description": "最后一句有没有给观众可执行的动作",
+      "type": "llm",
+      "prompt": "看 last_sentence（最后一句）：有没有给观众一个今天就能做的一步、明确的下一步或判断标准。只停在口号、感慨或总结不算可行动。",
+      "level": "WARN",
+      "enabled": true
+    },
+    {
+      "id": "point_alignment",
+      "name": "镜头与 point 对齐（LLM / L04）",
+      "description": "每镜的旁白是否支撑该镜 point",
+      "type": "llm",
+      "prompt": "逐镜检查旁白是否支撑该镜 point（这一镜要观众记住什么）。不匹配的镜号和原因列在 items，格式「镜 3：旁白讲成本，point 却在讲排队」。",
+      "level": "WARN",
+      "enabled": true
+    }
+  ]
+}

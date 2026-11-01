@@ -14,28 +14,47 @@
   "shots": [
     {
       "heading": "本地渲染",
-      "bullets": ["不用等云端排队", "改一行就重出"],
-      "pose": "point"
+      "bullets": [
+        "不用等云端排队",
+        "改一行就重出"
+      ],
+      "pose": "point",
+      "point": "本地渲染不用排队，改一行就能重出"
     },
     {
       "heading": "成本可控",
-      "bullets": ["只花电费", "不按秒计费"],
-      "pose": "idle"
+      "bullets": [
+        "只花电费",
+        "不按秒计费"
+      ],
+      "pose": "idle",
+      "point": "渲染只花电费，不按秒充额度"
     },
     {
       "heading": "完全可复现",
-      "bullets": ["同一份脚本", "同一帧画面"],
-      "pose": "think"
+      "bullets": [
+        "同一份脚本",
+        "同一帧画面"
+      ],
+      "pose": "think",
+      "point": "同一份脚本和音轨，什么时候渲都一致"
     },
     {
       "heading": "改起来便宜",
-      "bullets": ["重出只要几十秒", "版本可回溯"],
-      "pose": "wave"
+      "bullets": [
+        "重出只要几十秒",
+        "版本可回溯"
+      ],
+      "pose": "wave",
+      "point": "改一句旁白只改 JSON，几十秒重出"
     },
     {
       "heading": "先出成片",
-      "bullets": ["看见画面再打磨"],
-      "pose": "point"
+      "bullets": [
+        "看见画面再打磨"
+      ],
+      "pose": "point",
+      "point": "先在本地出成片，再谈打磨"
     }
   ]
 }

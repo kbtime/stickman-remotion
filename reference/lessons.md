@@ -103,3 +103,44 @@
 
 23. **公共产物不要手写。**
     `public/*-narration.mp3`、`public/*-captions.json`、`out/`、`qc/` 都是运行产物；改 script.json 后重新跑 TTS / render / qc 即可。
+
+## 内容层
+
+24. **先核实再写稿。**
+    数字、年份、“第一/最/研究表明”这类说法最容易在口播里变成假事实。先用 `stickman research` 抽出来联网核对，再决定保留、改写还是删掉；搜索不到来源就按未证实处理，不要把“没搜到反例”当成“已证实”。
+
+25. **每镜一个 point。**
+    `shots[].point` 是这一镜要观众记住的一句话，不是标题也不是旁白原文。写不出 point 通常说明这一镜可以删；一镜塞两个 point 就拆镜。旁白、画面和字幕都服务同一个 point，`stickman lint` 先查 point 缺不缺，再查 `beatRole` 的五段时长是否偏得离谱。
+
+26. **内容规则要可配置。**
+    钩子、术语、结尾行动、镜头对齐这些判断会随片型和账号变化，不要硬编码在脚本里。规则放 `qc-rules.json`（version 2），用 `id/name/description/type/check/params/prompt/level/stage/enabled` 描述；项目目录可以放自己的同名文件覆盖仓库默认，临时试规则用 `--rules <file>`。禁用规则要显示 `DISABLED`，而不是悄悄消失。
+
+27. **LLM 判断只能当建议。**
+    内容检查受 prompt、模型和输入长度影响，同一句稿两次结果可能不同。规则级别是 `FAIL` 也只计入 QC 的总体 WARN，不改变退出码；最终发不发仍要人看一遍成片。把 LLM 当“第二个编辑”，不是审核闸门。
+
+28. **规则分成 builtin / regex / llm 三类，阈值全部进 params。**
+    C01–C26 里能用确定性逻辑判断的写成 builtin 检查器，纯词表/正则的写成 `type=regex`，需要语感的才交给 LLM。阈值、术语表、开场套话正则都放 `params`，改规则不用改脚本；`loadRules` 会在启动时报出「哪条规则哪个字段」不合法，正则编译失败也在这里拦住。C08a 和 C12a 合入 C08/C12 的 params，不再单独占 id；4 条 LLM 规则保留旧 id，对应规范 L01–L04。
+
+29. **字数只算中文字、英文字母和数字。**
+    标点、空格、换行都不算。C01/C02/C04/C05 共用同一个 `countChars`，否则同一条稿子在不同规则里会得到互相矛盾的字数。
+
+30. **stage 决定规则什么时候拦人。**
+    `stage=render` 的规则默认在 draft 阶段 SKIP；C17 配了 `"draftStatus": "PASS"`，所以草稿阶段显示 PASS/不拦，只有 `lint --stage render` 或 `render --content-gate` 才真正检查【待补】。内容门默认关闭，旧示例不加参数照常出片；打开后渲染前先跑一遍 lint，有 FAIL 就中止，避免把【待补】渲进成片。
+
+31. **内容 FAIL 与视觉 FAIL 分开。**
+    画面/字幕的 FAIL 决定 QC 退出码；内容规则即使是 FAIL，也只计入总体 WARN，并在报告里标「内容 FAIL（渲染前需改）」。LLM 判断受 prompt 和输入长度影响，不能当自动审核闸门。
+
+32. **C08 先看实测时间，再看文案兜底。**
+    有 captions 时用 `start/end` 或 `startFrame/endFrame` 除以 fps 取前 3 秒的句子检查开场套话，同时 `narration[0..2]` 也要查（C08a 词表在 `params.openerPattern`）；没有 captions 才退化为只查 narration，并在 detail 写「未用实测时间」。第一镜必须 `beat=hook`。
+
+33. **句长要折中，不能一味短。**
+    v2 允许 17–22 字的信息句，但要占额度：钩子+问题合计 ≤1，拆解每 8 镜 ≤1，结论+行动合计 ≤1；≥23 仍直接 FAIL。C02 的 detail 要列出占用额度的句子，C21 单独汇总额度。另一个极端是分行体：连续 ≥4 句都 ≤8 字就 FAIL（C20），连续 5 句都在 12–16 字且相邻差 ≤2 则 WARN（C26）。
+
+34. **结尾和假对比要分开判。**
+    C10 只管「不是…而是…」「不只是…更是…」「并非…而是…」；整句同时出现保存/上传、前端/后端这类对立名词时降 WARN，否则 FAIL。评论区、你学会了吗、口号问句归 C12：口号空问 FAIL，含具体对象的问题 WARN，无问句 PASS；C12a 口号词表（未来可期、让我们、致敬等）也合在 C12。
+
+35. **C14 和 C23 不要重复计数。**
+    连续同开头 ≥3 句交给 C23 机械排比（WARN）；C14 只报连续=2 的情况。三连四字词和「从…到…，从…到…」也归 C23。这样同一段稿子不会同时被两条规则各报一次。
+
+36. **旧样片不过检不是回归。**
+    `examples/sample*` 是 v1 之前的存量稿，文案和 beat 都不符合 v2。`npm run lint:examples` 报 FAIL 可以接受；不要为了让旧样片过检去改 16:9/9:16 渲染默认路径，新稿从 `test/fixtures/style-guide-demo.json` 起步。
