@@ -7,8 +7,11 @@
  *   node scripts/render.mjs --project examples/sample --audio ./my-voice.mp3
  *   node scripts/render.mjs --project examples/sample --out out/demo.mp4 --force-tts
  *   node scripts/render.mjs --project examples/sample --aspect 9:16
+ *   node scripts/render.mjs --project examples/sample --preview 30s
+ *   node scripts/render.mjs --project examples/sample --preview 10.5 --out out/demo-preview.mp4
  *
  * 画幅优先级：--aspect > script.aspect > script.width/height > 默认 16:9
+ * 预览：--preview <时长> 只渲染前 N 秒（30s / 15 / 10.5s 都支持）。
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
@@ -32,6 +35,13 @@ const parseArgs = (argv) => {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a.startsWith("--")) {
+      const eq = a.indexOf("=");
+      if (eq > 2) {
+        // 支持 --rate=-8% / --preview=10.5s 这种 = 形式，
+        // 避免 -8% 被某些命令行解析器当成新选项。
+        out[a.slice(2, eq)] = a.slice(eq + 1);
+        continue;
+      }
       const key = a.slice(2);
       const next = argv[i + 1];
       if (next && !next.startsWith("--")) {
@@ -48,6 +58,15 @@ const parseArgs = (argv) => {
 const log = (...m) => console.log("[render]", ...m);
 
 const readJson = async (file) => JSON.parse(await fs.readFile(file, "utf8"));
+
+/** "30s" / "15" / "10.5s" -> 秒数；不合法返回 null */
+const parsePreviewSeconds = (value) => {
+  if (typeof value !== "string") return null;
+  const match = value.trim().match(/^(\d+(?:\.\d+)?)s?$/i);
+  if (!match) return null;
+  const seconds = Number.parseFloat(match[1]);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+};
 
 /** 与 src/types.ts 的 ASPECT_SIZE / resolveAspect 保持一致 */
 const ASPECT_SIZE = {
@@ -142,7 +161,31 @@ const main = async () => {
     : aspect === "9:16"
       ? `out/${name}-9x16.mp4`
       : `out/${name}.mp4`;
-  const outRel = typeof args.out === "string" ? args.out : defaultOut;
+  // 预览：--preview <时长>，只输出前 N 秒，帧数不超过整片总帧数
+  let previewSeconds = null;
+  if (args.preview !== undefined) {
+    previewSeconds = parsePreviewSeconds(args.preview);
+    if (previewSeconds === null) {
+      throw new Error(
+        `--preview 需要时长（如 30s / 15 / 10.5s），收到 "${String(args.preview)}"`
+      );
+    }
+  }
+  const previewFrames =
+    previewSeconds === null
+      ? durationInFrames
+      : Math.min(
+          durationInFrames,
+          Math.max(1, Math.floor(previewSeconds * fps + 1e-9))
+        );
+  const isPreview = previewSeconds !== null;
+
+  const explicitOut = typeof args.out === "string" ? args.out : null;
+  const outRel = explicitOut
+    ? explicitOut
+    : isPreview
+      ? defaultOut.replace(/\.mp4$/i, "-preview.mp4")
+      : defaultOut;
   const outAbs = path.resolve(ROOT, outRel);
   await fs.mkdir(path.dirname(outAbs), { recursive: true });
 
@@ -151,24 +194,30 @@ const main = async () => {
       cliAspect ? "CLI --aspect" : scriptAspect ? "script.aspect" : "script.width/height 或默认"
     }）`
   );
-  log(`时长 ${durationInFrames} 帧 / ${(durationInFrames / fps).toFixed(2)}s @ ${fps}fps`);
+  log(`整片 ${durationInFrames} 帧 / ${(durationInFrames / fps).toFixed(2)}s @ ${fps}fps`);
+  if (isPreview) {
+    log(
+      `预览：只渲染前 ${previewSeconds}s -> ${previewFrames} 帧（0-${previewFrames - 1}）`
+    );
+  }
   log(`输出 ${outRel}`);
 
-  await run(
-    process.execPath,
-    [
-      path.join(ROOT, "node_modules", ".bin", "remotion"),
-      "render",
-      "src/index.ts",
-      "StickmanVideo",
-      outAbs,
-      `--props=${JSON.stringify(props)}`,
-      `--fps=${fps}`,
-      `--width=${videoSize.width}`,
-      `--height=${videoSize.height}`,
-    ],
-    { cwd: ROOT }
-  );
+  const renderArgs = [
+    path.join(ROOT, "node_modules", ".bin", "remotion"),
+    "render",
+    "src/index.ts",
+    "StickmanVideo",
+    outAbs,
+    `--props=${JSON.stringify(props)}`,
+    `--fps=${fps}`,
+    `--width=${videoSize.width}`,
+    `--height=${videoSize.height}`,
+  ];
+  if (isPreview) {
+    renderArgs.push(`--frames=0-${previewFrames - 1}`);
+  }
+
+  await run(process.execPath, renderArgs, { cwd: ROOT });
 
   log(`完成：${outAbs}`);
 };

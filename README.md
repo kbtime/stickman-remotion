@@ -1,6 +1,6 @@
 # stickman-remotion
 
-极简可用的火柴人讲解视频工程：**Remotion 本地逐帧渲染** + **edge-tts 中文旁白** + **按字数比例对齐的字幕**。
+极简可用的火柴人讲解视频工程：**Remotion 本地逐帧渲染** + **edge-tts 中文旁白** + **edge-tts WordBoundary 帧精确字幕**（匹配失败自动回退按字数比例）。
 不依赖 Gemini、Google Flow 或任何云端视频生成，全程离线成片。
 
 火柴人是 `src/components/StickFigure.tsx` 里用 SVG 现画的（圆头 + 躯干 + 四肢），没有复制任何第三方素材图。
@@ -10,7 +10,8 @@
 | 依赖 | 版本 / 说明 |
 |---|---|
 | Node.js | **20+**（本工程用 npm，不要用 pnpm） |
-| FFmpeg / ffprobe | 读取音频时长、可选转码 |
+| Python 3 | **3.9+**（运行 `scripts/edge_tts_boundary.py`） |
+| FFmpeg / ffprobe | 读取音频时长、抽帧 QC、可选转码 |
 | edge-tts | **>= 7.3.1**（7.2.8 及更早会因微软 Sec-MS-GEC 返回 403）；`pip install --user --break-system-packages 'edge-tts>=7.3.1'`（或 `pipx install edge-tts`） |
 
 检查：
@@ -53,8 +54,8 @@ npm run build:sample           # → out/sample.mp4
 这条命令会依次做：
 
 1. 读 `examples/<项目>/script.json` 的 `narration`
-2. 调用 edge-tts 合成整条旁白 → `public/<项目>-narration.mp3`
-3. 用 `ffprobe` 拿总时长，按每句字数比例分配 `start/end` → `public/<项目>-captions.json`
+2. 调用 `scripts/edge_tts_boundary.py`（edge-tts 7 + `boundary="WordBoundary"`）合成整条旁白 → `public/<项目>-narration.mp3`
+3. 把逐词边界按字符顺序匹配回每一句，按 fps 量化到整数帧 → `public/<项目>-captions.json`（含 `startFrame` / `endFrame` / `words`）
 4. 调用 Remotion 渲染 → `out/<项目>.mp4`，并打印输出路径
 
 `build:sample-short` / `build:sample-story` / `build:sample-story-portrait` / `build:sample-drucker` 走的是同一条链路，项目目录换成对应的 `examples/<项目>`，产物是 `out/<项目>.mp4`。`build:sample-story-916` 是「同一个项目临时切竖屏」的例子：追加 `--aspect 9:16`，产物是 `out/sample-story-9x16.mp4`。
@@ -82,6 +83,115 @@ npm run studio
 ```bash
 npm run tts -- --project examples/sample
 ```
+
+## 帧精确字幕（默认：edge-tts WordBoundary）
+
+默认 TTS 路径不再按字数猜时间，而是用 edge-tts 7 的逐词边界：
+
+```bash
+node scripts/tts.mjs --project examples/sample-story
+# 或
+stickman tts --project examples/sample-story
+```
+
+流程：
+
+1. `scripts/edge_tts_boundary.py` 调 `edge_tts.Communicate(text, voice, rate=rate, boundary="WordBoundary")`，一边写 mp3，一边收集 `offset` / `duration`（单位 100ns）和词文本；
+2. `scripts/tts.mjs` 忽略标点、空白、符号，把词按字符顺序逐句匹配回 `narration`；
+3. 每句 `start = 首词 start`，`end = 下一句首词 start`，末句 `end = 音频时长`；
+4. 按 `script.fps`（默认 30）量化：`startFrame = round(start * fps)`，时间写回 `startFrame / fps`，并保证相邻不重叠、单调、每条至少 1 帧。
+
+`public/<项目>-captions.json` 形如：
+
+```jsonc
+{
+  "audio": "sample-story-narration.mp3",
+  "duration": 22.5,
+  "fps": 30,
+  "alignment": "edge-wordboundary",
+  "captions": [
+    {
+      "start": 0.1,
+      "end": 3.2,
+      "startFrame": 3,
+      "endFrame": 96,
+      "text": "我想快出一条火柴人片。",
+      "words": [
+        { "start": 0.1, "end": 0.44, "text": "我" },
+        { "start": 0.44, "end": 0.72, "text": "想" }
+      ]
+    }
+  ]
+}
+```
+
+回退规则：
+
+- Python 报错、拿不到词边界、或词序列与 `narration` 对不上 → 退回到原来的**按字数比例分配**，`alignment` 写 `"proportional"`，终端打印警告；
+- `--audio` 自备音频没有词边界，仍然走比例分配（`alignment: "proportional"`）。
+
+> 词边界是“词”不是“字”，中文一条 boundary 可能是“第一”“句”“测试”这样长度不固定的片段；标点通常不会出现在 boundary 文本里。
+
+## 预览渲染：只渲前 N 秒
+
+调试字幕、检查开头节奏时不用等整片渲完：
+
+```bash
+# 只渲前 30 秒
+node scripts/render.mjs --project examples/sample-story --preview 30s
+
+# 15 秒 / 10.5 秒都可以
+node scripts/render.mjs --project examples/sample-short --preview 15
+node scripts/render.mjs --project examples/sample-story-portrait --preview=10.5s
+```
+
+- `--preview` 接受 `30s` / `15` / `10.5s`；
+- 内部换算成 `--frames=0-(N*fps-1)`，帧数不超过整片总帧数；
+- 未指定 `--out` 时默认输出 `out/<name>-preview.mp4`；竖屏 CLI 切换时是 `out/<name>-9x16-preview.mp4`；
+- 预览产物仍然是正常 mp4，可直接播放或跑 QC。
+
+## 成片 QC
+
+`scripts/qc.mjs` 用 ffmpeg 抽小尺寸灰度帧，纯 Node 做画面检查，同时检查 captions 时间轴：
+
+```bash
+node scripts/qc.mjs \
+  --video out/sample-short.mp4 \
+  --captions public/sample-short-captions.json \
+  --out-dir qc/sample-short \
+  --sample-fps 2
+
+# 预览视频加 --preview，只检查视频时长内开始的字幕
+node scripts/qc.mjs \
+  --video out/sample-short-preview.mp4 \
+  --captions public/sample-short-captions.json \
+  --preview
+
+# CLI 入口
+stickman qc --video out/sample-short.mp4 --captions public/sample-short-captions.json
+```
+
+检查项与阈值：
+
+| 检查项 | 规则 | 级别 |
+|---|---|---|
+| 黑帧 | 平均亮度 `< 16`，连续 `>= 0.5s` | FAIL |
+| 空镜 | 标准差 `< 6` 或前景墨迹 `< 0.1%`，连续 `>= 1.5s` | WARN |
+| 主角尺寸 | 上方 78% 区域墨迹外接框高度占比，中位数应在 `0.25–0.85` | WARN |
+| 字幕安全区 | 左右边距 `>= 5%` 宽、底边距 `>= 3%` 高、顶部不得越过 60% 横线 | FAIL |
+| 字幕停留 | `< 1.0s` FAIL；`< 1.5s` WARN；`> 7s` WARN | FAIL / WARN |
+| 字幕字数 | 每秒有效字数 `> 8` | WARN |
+| 字幕重叠 | 相邻 `start < 上一条 end` | FAIL |
+| 整数帧 | 有 `startFrame` / `endFrame` 时必须为整数 | FAIL |
+| 视频时长 | 与字幕末尾相差 `> 0.5s` | WARN |
+
+输出：
+
+- `qc/<name>/qc-report.json`：完整的检查数据、连续段、每帧汇总与问题清单；
+- `qc/<name>/qc-report.md`：汇总 PASS/WARN/FAIL、各项数据表和问题表；
+- 退出码：有 FAIL 为 `1`，否则 `0`。
+
+预览视频忘记加 `--preview` 时，如果脚本发现视频明显短于字幕末尾，会自动只检查视频时长内的字幕，并给一条时长 WARN 提醒。
 
 ## 画幅：16:9 横屏 / 9:16 竖屏
 
@@ -310,7 +420,7 @@ node scripts/render.mjs --project examples/sample
 node scripts/render.mjs --project examples/sample --audio /path/to/voice.mp3
 ```
 
-注意：自备音频里的**句子顺序和数量**必须与 `narration` 一致，因为字幕是按字数比例切的。
+注意：自备音频没有词边界，字幕仍按字数比例切；音频里的**句子顺序和数量**必须与 `narration` 一致。
 
 常用参数：
 
@@ -329,7 +439,7 @@ node scripts/render.mjs --project examples/sample --out out/demo.mp4
 
 ## CLI（stickman）
 
-`bin/stickman.mjs` 只是 `scripts/render.mjs` / `scripts/tts.mjs` 外面的一层薄包装：子命令之后的参数**原样转发**，工作目录固定为仓库根，退出码透传。它和 `npm run build:sample-story`、`node scripts/render.mjs ...` 完全等价，只是入口更短。
+`bin/stickman.mjs` 只是 `scripts/render.mjs` / `scripts/tts.mjs` / `scripts/qc.mjs` 外面的一层薄包装：子命令之后的参数**原样转发**，工作目录固定为仓库根，退出码透传。它和 `npm run build:sample-story`、`node scripts/render.mjs ...` 完全等价，只是入口更短。
 
 三种用法：
 
@@ -349,9 +459,12 @@ stickman render --project examples/sample-story
 
 ```bash
 stickman render --project examples/sample-story --aspect 9:16  # 渲染 mp4（必要时先 TTS）
+stickman render --project examples/sample-story --preview 30s   # 只渲前 30 秒
 stickman tts --project examples/sample --audio voice.mp3        # 只生成旁白与字幕
+stickman qc --video out/sample.mp4 --captions public/sample-captions.json  # 成片 QC
 stickman --help          # 总帮助
 stickman render --help   # 子命令帮助，列出会转发的常用参数
+stickman qc --help       # QC 参数说明
 ```
 
 等价的旧写法：
@@ -359,7 +472,9 @@ stickman render --help   # 子命令帮助，列出会转发的常用参数
 | stickman | 等价命令 |
 |---|---|
 | `stickman render --project examples/sample-story` | `node scripts/render.mjs --project examples/sample-story`（= `npm run build:sample-story`） |
+| `stickman render --project examples/sample-story --preview 30s` | `node scripts/render.mjs --project examples/sample-story --preview 30s` |
 | `stickman tts --project examples/sample` | `node scripts/tts.mjs --project examples/sample` |
+| `stickman qc --video out/sample.mp4 --captions public/sample-captions.json` | `node scripts/qc.mjs --video out/sample.mp4 --captions public/sample-captions.json` |
 
 `npm run build:*` 系列脚本保持不变，两种入口都可以用。
 
@@ -377,9 +492,13 @@ stickman-remotion/
 ├── examples/sample-story-portrait/script.json  # 竖屏 9:16 版（复用 sample-story 分镜）
 ├── public/                      # TTS 产物（运行时生成，已在 .gitignore）
 ├── out/                         # 渲染输出
+├── qc/                          # QC 报告（运行时生成）
+├── reference/lessons.md         # 踩坑记录（edge-tts / 帧量化 / 预览 / QC 阈值）
 ├── scripts/
-│   ├── tts.mjs                  # edge-tts + ffprobe + 字幕时间轴
-│   └── render.mjs               # 一键 TTS + render
+│   ├── edge_tts_boundary.py     # edge-tts WordBoundary 合成 + 逐词边界
+│   ├── tts.mjs                  # 逐词对齐 + 帧量化字幕（失败回退比例分配）
+│   ├── render.mjs               # 一键 TTS + render（支持 --preview）
+│   └── qc.mjs                   # 抽帧 QC + captions 时间轴检查
 └── src/
     ├── index.ts                 # registerRoot
     ├── Root.tsx                 # Composition "StickmanVideo"
@@ -397,7 +516,7 @@ stickman-remotion/
 
 ## 已知限制
 
-- **字幕是按字数比例估时间的，不是强制对齐。** 时间按「音频总时长 + 每句字数比例」估算，句内停顿与语气词会让个别 cue 早到或晚到 0.2–0.5 秒。需要像素级准确时可接 Whisper / 其他强制对齐工具（可选，默认不装），替换 `captions.json` 即可，渲染层不需要改。
+- **默认字幕是词边界对齐，但匹配失败会退回字数比例。** TTS 路径用 edge-tts WordBoundary 拿逐词时间，失败时会打印警告并写 `alignment: "proportional"`；`--audio` 自备音频始终按字数比例分配。比例分配下句内停顿与语气词仍会让个别 cue 早到或晚到 0.2–0.5 秒。
 - **字幕 cue 是单句一条**，没有做长句自动折行分组；一行超过约 26 个汉字会被 CSS 截断成两行（`-webkit-line-clamp: 2`），更长的句子会被裁掉。
 - **edge-tts 需要联网**（微软在线语音服务）。自备音频（`--audio`）可完全离线渲染。
 - **火柴人是极简 SVG，程序化画出来的**，没有 B1 手绘素材，也没有 pose sheet；`point` / `think` 的手部是角度近似，不保证手正好贴在脸上。
