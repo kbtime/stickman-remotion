@@ -115,6 +115,28 @@ export const CAST_ACTIONS: CastAction[] = [
   "none",
 ];
 
+/** 规范五段：钩子 / 问题 / 拆解 / 结论 / 行动（内容规则用 shots[].beat） */
+export type BeatSegment = "hook" | "problem" | "breakdown" | "takeaway" | "action";
+
+export const BEAT_SEGMENTS: BeatSegment[] = [
+  "hook",
+  "problem",
+  "breakdown",
+  "takeaway",
+  "action",
+];
+
+/** 旧字段 beatRole；conclusion 在内容规则里映射为 takeaway */
+export type BeatRole = "hook" | "problem" | "breakdown" | "conclusion" | "action";
+
+export const BEAT_ROLES: BeatRole[] = [
+  "hook",
+  "problem",
+  "breakdown",
+  "conclusion",
+  "action",
+];
+
 export type CastMember = {
   /** "hero" | "npc" 等 */
   id: string;
@@ -164,9 +186,14 @@ export type Shot = {
   splitFocus?: SplitFocus;
   /** 本镜字幕优先；否则用 narration[i] */
   caption?: string;
+  /** 这一镜要观众记住什么（文案 lint 必填，缺省会被 stickman lint 报 WARN） */
+  point?: string;
+  /** 可选：该镜在五段式里的位置，用于节奏检查（旧字段） */
+  beatRole?: BeatRole;
   // 共用：
   duration?: number;
-  beat?: string;
+  /** 规范五段；自由文本不会被内容规则当成段落 */
+  beat?: BeatSegment | string;
   motion?: string;
 };
 
@@ -183,6 +210,8 @@ export type Script = {
   height: number;
   /** 画幅；给了就覆盖 width/height。缺省按 width/height 推断，再缺省 16:9 */
   aspect?: Aspect;
+  /** 内容规则用：short 或镜头数 ≤ 12 时按短版字数区间检查 */
+  length?: "short" | "long";
   /** 由 scripts/tts.mjs 写入，供渲染层使用 */
   captions?: Caption[];
   /** public/ 下的相对路径，例如 narration.mp3 */
@@ -273,6 +302,9 @@ const normalizeShot = (shot: Shot): Shot => ({
       ? shot.splitFocus
       : undefined,
   caption: shot.caption,
+  point: shot.point,
+  beatRole:
+    shot.beatRole && BEAT_ROLES.includes(shot.beatRole) ? shot.beatRole : undefined,
   duration: shot.duration,
   beat: shot.beat,
   motion: shot.motion,
@@ -295,6 +327,7 @@ export const normalizeScript = (input: Partial<Script>): Script => {
     theme: input.theme && THEMES.includes(input.theme) ? input.theme : undefined,
     narration: input.narration ?? [],
     shots,
+    ...(input.length ? { length: input.length } : {}),
     fps: input.fps ?? DEFAULT_FPS,
     width: size.width,
     height: size.height,

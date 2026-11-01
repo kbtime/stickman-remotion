@@ -9,9 +9,11 @@
  *   node scripts/render.mjs --project examples/sample --aspect 9:16
  *   node scripts/render.mjs --project examples/sample --preview 30s
  *   node scripts/render.mjs --project examples/sample --preview 10.5 --out out/demo-preview.mp4
+ *   node scripts/render.mjs --project examples/sample --content-gate
  *
  * 画幅优先级：--aspect > script.aspect > script.width/height > 默认 16:9
  * 预览：--preview <时长> 只渲染前 N 秒（30s / 15 / 10.5s 都支持）。
+ * 内容门：--content-gate 在渲染前跑 lint --stage render，有 FAIL 则中止；默认关闭。
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
@@ -201,6 +203,29 @@ const main = async () => {
     );
   }
   log(`输出 ${outRel}`);
+
+  if (args["content-gate"]) {
+    log("内容门：lint --stage render");
+    try {
+      await run(
+        process.execPath,
+        [
+          "scripts/lint.mjs",
+          "--project",
+          projectRel,
+          "--stage",
+          "render",
+          "--captions",
+          path.join("public", captionsRel),
+        ],
+        { cwd: ROOT }
+      );
+    } catch {
+      throw new Error(
+        "内容门未通过（lint --stage render 有 FAIL），已中止渲染；先改稿或去掉 --content-gate"
+      );
+    }
+  }
 
   const renderArgs = [
     path.join(ROOT, "node_modules", ".bin", "remotion"),

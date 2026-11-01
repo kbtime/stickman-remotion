@@ -7,6 +7,17 @@
  *   node scripts/qc.mjs --video out/x-preview.mp4 --captions public/x-captions.json --preview
  *   node scripts/qc.mjs --video out/x.mp4 --captions public/x-captions.json \
  *     --out-dir qc/x --sample-fps 2
+ *   node scripts/qc.mjs --video out/x.mp4 --captions public/x-captions.json \
+ *     --script examples/sample/script.json [--no-content] [--rules qc-rules.json]
+ *     [--stage draft|render] [--model deepseek-v4-flash]
+ *
+ * 给了 --script 时额外：
+ *   - 调 scripts/lint.mjs 的 lintScript，检查 point 缺失与五段节奏
+ *   - 调 scripts/content-qc.mjs：先跑 builtin/regex 规则，再按规则文件做 LLM 内容检查
+ *     （--no-content 关闭）。规则文件优先级：
+ *     --rules <file> > 项目目录 qc-rules.json > 仓库根 qc-rules.json
+ *   - qc-report.json 的 content 是数组；内容 FAIL 在汇总里标「渲染前需改」，
+ *     但只计入 WARN，不改变视觉退出码。
  *
  * 检查项：
  *   1. 黑帧（平均亮度 < 16，连续 >= 0.5s -> FAIL）
@@ -16,12 +27,15 @@
  *   5. 字幕停留/字数/重叠/整数帧
  *   6. 视频时长与字幕末尾差值（> 0.5s -> WARN；--preview 时跳过）
  *
- * 退出码：有 FAIL 为 1，否则 0。
+ * 退出码：有 FAIL 为 1，否则 0。内容检查的 FAIL 只计入 WARN，不影响退出码。
  */
 import { spawn, execFile } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { lintScript } from "./lint.mjs";
+import { contentQc, contentCheckRows } from "./content-qc.mjs";
+import { resolveRulesFile } from "./content-rules.mjs";
 
 const exec = promisify(execFile);
 
@@ -118,6 +132,9 @@ const median = (values) => {
 
 const fmtPct = (v) => (v === null || v === undefined ? "n/a" : `${(v * 100).toFixed(2)}%`);
 const fmtSec = (v) => `${Number(v).toFixed(2)}s`;
+const fmtRange = (range) =>
+  Array.isArray(range) ? `${range[0]}–${range[1]}` : "—";
+const cell = (v) => String(v ?? "").replace(/\|/g, "\\|").replace(/\n+/g, " ");
 
 /** 单帧灰度统计：亮度、标准差、背景众数、墨迹外接框 */
 const analyzeFrame = (buf, width, height) => {
@@ -385,6 +402,9 @@ const buildMarkdown = (report) => {
   lines.push("");
   lines.push(`- FAIL：${summary.fail}`);
   lines.push(`- WARN：${summary.warn}`);
+  if (summary.contentFail > 0) {
+    lines.push(`- **内容 FAIL（渲染前需改）：${summary.contentFail}**`);
+  }
   lines.push("");
   lines.push("| 检查项 | 状态 | 关键数据 |");
   lines.push("|---|---|---|");
@@ -462,6 +482,60 @@ const buildMarkdown = (report) => {
   }
   lines.push("");
 
+  if (checks.script) {
+    lines.push("## 脚本与节奏");
+    lines.push("");
+    lines.push(`- 脚本：\`${checks.script.path}\``);
+    lines.push(`- 状态：${checks.script.status}`);
+    lines.push("");
+    lines.push("| 段落 | 建议镜头 | 实际镜头 | 建议时长 | 实际时长 |");
+    lines.push("|---|---:|---:|---:|---:|");
+    for (const row of checks.script.pacing) {
+      lines.push(
+        `| ${row.label} | ${fmtRange(row.suggestedShotRange)} | ${row.actualShots} | ${fmtRange(row.suggestedSecRange)} | ${fmtSec(row.actualSec)} |`
+      );
+    }
+    lines.push("");
+    if (checks.script.items.length === 0) {
+      lines.push("脚本结构与节奏没有发现问题。");
+    } else {
+      lines.push("| 级别 | 代码 | 问题 |");
+      lines.push("|---|---|---|");
+      for (const item of checks.script.items) {
+        lines.push(`| ${item.level} | ${item.code} | ${cell(item.message)} |`);
+      }
+    }
+    lines.push("");
+  }
+
+  if (report.content) {
+    const contentSummary = report.contentSummary ?? {};
+    lines.push("## 内容检查");
+    lines.push("");
+    lines.push(`- 状态：${contentSummary.status ?? "—"}`);
+    if (contentSummary.model) {
+      lines.push(`- 模型：${contentSummary.model}`);
+    }
+    if (contentSummary.rulesFile) {
+      lines.push(`- 规则：\`${contentSummary.rulesFile}\``);
+    }
+    if (contentSummary.error) {
+      lines.push(`- 错误：${cell(contentSummary.error)}`);
+    }
+    if (contentSummary.fail > 0) {
+      lines.push(`- **内容 FAIL（渲染前需改）：${contentSummary.fail} 条**`);
+    }
+    lines.push("");
+    lines.push("| ID | 规则 | 级别 | 状态 | 说明 |");
+    lines.push("|---|---|---|---|---|");
+    for (const row of contentCheckRows(report.content)) {
+      lines.push(
+        `| ${row.id} | ${row.label} | ${row.level} | ${row.status} | ${cell(row.detail)} |`
+      );
+    }
+    lines.push("");
+  }
+
   lines.push("## 问题清单");
   lines.push("");
   if (issues.length === 0) {
@@ -512,6 +586,39 @@ const main = async () => {
       : [];
   if (captions.length === 0) {
     throw new Error(`${captionsFile} 里没有 captions`);
+  }
+
+  let script = null;
+  let scriptFile = null;
+  if (typeof args.script === "string") {
+    scriptFile = path.resolve(ROOT, args.script);
+    script = await readJson(scriptFile);
+  }
+
+  // 内容检查规则：--rules 优先，其次项目目录，最后仓库根默认文件。
+  // --no-content 时完全不碰规则文件，避免坏规则阻塞纯画面 QC。
+  const contentEnabled = Boolean(script && !args["no-content"]);
+  const contentRulesFile = contentEnabled
+    ? resolveRulesFile({
+        rulesFile: typeof args.rules === "string" ? args.rules : undefined,
+        projectDir: scriptFile ? path.dirname(scriptFile) : undefined,
+      })
+    : null;
+  const stageArg = args.stage === undefined ? "draft" : String(args.stage);
+  if (stageArg !== "draft" && stageArg !== "render") {
+    throw new Error(`--stage 只能是 draft 或 render，收到 "${stageArg}"`);
+  }
+  let research = "";
+  const researchFile =
+    contentEnabled && scriptFile
+      ? path.join(path.dirname(scriptFile), "research.md")
+      : null;
+  if (researchFile) {
+    try {
+      research = await fs.readFile(researchFile, "utf8");
+    } catch {
+      research = "";
+    }
   }
 
   const info = await probeVideo(video);
@@ -884,6 +991,61 @@ const main = async () => {
     },
     issues,
   };
+
+  if (script) {
+    const lint = lintScript(script);
+    report.checks.script = {
+      path: path.relative(ROOT, scriptFile),
+      status: lint.items.some((item) => item.level === "ERROR")
+        ? "FAIL"
+        : lint.items.some((item) => item.level === "WARN")
+          ? "WARN"
+          : "PASS",
+      items: lint.items,
+      pointMissing: lint.items
+        .filter((item) => item.code === "missing-point")
+        .map((item) => item.message),
+      pacing: lint.pacing,
+    };
+    log(`脚本检查：${report.checks.script.status}（${lint.items.length} 条提示）`);
+  }
+
+  if (script && !args["no-content"]) {
+    const content = await contentQc({
+      script,
+      captions,
+      research,
+      stage: stageArg,
+      rulesFile: contentRulesFile ?? undefined,
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      model: typeof args.model === "string" ? args.model : undefined,
+    });
+    report.content = content.content;
+    report.contentSummary = {
+      status: content.status,
+      model: content.model,
+      rulesFile: contentRulesFile ? path.relative(ROOT, contentRulesFile) : content.rulesFile,
+      generatedAt: content.generatedAt,
+      ...(content.error ? { error: content.error } : {}),
+      fail: content.content.filter((item) => item.status === "FAIL").length,
+      warn: content.content.filter((item) => item.status === "WARN").length,
+      skip: content.content.filter((item) => item.status === "SKIP").length,
+      disabled: content.content.filter((item) => item.status === "DISABLED").length,
+    };
+    if (contentRulesFile) {
+      log(
+        `内容规则：${path.relative(ROOT, contentRulesFile)}（${content.content.length} 条，阶段 ${stageArg}）`
+      );
+    }
+    const contentFails = report.contentSummary.fail;
+    if (contentFails > 0) {
+      // 内容判断是建议性的：FAIL 只计入 WARN，不让视觉退出码变 1
+      report.summary.warn += contentFails;
+      report.summary.contentFail = contentFails;
+      if (report.summary.status === "PASS") report.summary.status = "WARN";
+    }
+    log(`内容检查：${content.status}${content.error ? `（${content.error}）` : ""}`);
+  }
 
   await fs.mkdir(outDir, { recursive: true });
   const jsonPath = path.join(outDir, "qc-report.json");

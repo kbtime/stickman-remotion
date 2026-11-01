@@ -35,7 +35,8 @@
           "facing": "right"
         }
       ],
-      "props": []
+      "props": [],
+      "point": "快出一条火柴人短片，是这次的目标"
     },
     {
       "scene": "office",
@@ -69,7 +70,8 @@
           "scale": 0.85,
           "appearAt": 0.6
         }
-      ]
+      ],
+      "point": "第一反应是把生成交给云端"
     },
     {
       "scene": "queue",
@@ -107,7 +109,8 @@
           "scale": 0.8,
           "appearAt": 0
         }
-      ]
+      ],
+      "point": "云端会卡在排队墙"
     },
     {
       "scene": "queue",
@@ -135,7 +138,8 @@
           "scale": 0.5,
           "appearAt": 0.4
         }
-      ]
+      ],
+      "point": "干等没有结果，时间被耗掉"
     },
     {
       "scene": "desk",
@@ -163,7 +167,8 @@
           "scale": 0.8,
           "appearAt": 0
         }
-      ]
+      ],
+      "point": "换成本地渲染才有主动权"
     },
     {
       "scene": "desk",
@@ -197,7 +202,8 @@
           "scale": 0.36,
           "appearAt": 0.5
         }
-      ]
+      ],
+      "point": "按下回车，渲染立刻开跑"
     },
     {
       "scene": "stage",
@@ -225,7 +231,8 @@
           "scale": 0.8,
           "appearAt": 0.8
         }
-      ]
+      ],
+      "point": "成片可以复现"
     }
   ]
 }

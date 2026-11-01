@@ -20,7 +20,7 @@
     {
       "scene": "busy-desk",
       "framing": "medium",
-      "duration": 3.0,
+      "duration": 3,
       "beat": "中景：整面清单墙压下来，主角在桌前忙个不停",
       "motion": "上身前倾、双手快速交替小幅上下；表格与清单贴在墙面",
       "caption": "很多人把忙当成成果。",
@@ -50,7 +50,8 @@
           "scale": 0.62,
           "appearAt": 0.3
         }
-      ]
+      ],
+      "point": "把忙当成成果，是常见误区"
     },
     {
       "scene": "customer-gap",
@@ -97,7 +98,8 @@
           "appearAt": 0.4,
           "side": "right"
         }
-      ]
+      ],
+      "point": "表格填满不等于客户问题解决"
     },
     {
       "scene": "priority-room",
@@ -126,13 +128,14 @@
           "label": "做对的事",
           "appearAt": 0.4
         }
-      ]
+      ],
+      "point": "先问什么是对的事，再谈怎么做"
     },
     {
       "scene": "split-board",
       "framing": "wide",
       "splitFocus": "left",
-      "duration": 3.0,
+      "duration": 3,
       "beat": "分屏全景：强制左区「效率」，右区淡出",
       "motion": "主角站在竖线左侧，右手指向「效率·做快」竖牌",
       "caption": "效率是把事做快。",
@@ -165,7 +168,8 @@
           "appearAt": 0,
           "side": "right"
         }
-      ]
+      ],
+      "point": "效率是把事做快"
     },
     {
       "scene": "split-board",
@@ -204,7 +208,8 @@
           "appearAt": 0,
           "side": "right"
         }
-      ]
+      ],
+      "point": "成效是把该做的事做成"
     },
     {
       "scene": "priority-room",
@@ -242,12 +247,13 @@
           "appearAt": 0.8,
           "dim": true
         }
-      ]
+      ],
+      "point": "先选对目标，再谈提速"
     },
     {
       "scene": "busy-desk",
       "framing": "medium",
-      "duration": 3.0,
+      "duration": 3,
       "beat": "收束：回到满格清单墙前，主角站定收手；禁止庆祝动作",
       "motion": "站定，双臂小幅度自然摆动，清单墙退到背景",
       "caption": "忙完不等于做成。",
@@ -270,7 +276,8 @@
           "scale": 0.6,
           "appearAt": 0.2
         }
-      ]
+      ],
+      "point": "忙完不等于做成"
     }
   ]
 }
